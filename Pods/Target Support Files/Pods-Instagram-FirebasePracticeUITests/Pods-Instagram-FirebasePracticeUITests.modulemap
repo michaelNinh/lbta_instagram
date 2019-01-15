@@ -1,0 +1,6 @@
+framework module Pods_Instagram_FirebasePracticeUITests {
+  umbrella header "Pods-Instagram-FirebasePracticeUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}
