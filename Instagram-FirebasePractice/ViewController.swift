@@ -9,14 +9,40 @@
 import UIKit
 import Firebase
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
   
   let plusPhotoButton:UIButton = {
 //    this changes the color of the button
     let button = UIButton(type: .system)
     button.setImage(#imageLiteral(resourceName: "plus_photo").withRenderingMode(.alwaysOriginal), for: .normal)
+    button.addTarget(self, action: #selector(handlePhotoPlus), for: .touchUpInside)
     return button
   }()
+  
+  @objc func handlePhotoPlus(){
+    let imagePickerController = UIImagePickerController()
+    imagePickerController.delegate = self
+    imagePickerController.allowsEditing = true
+    present(imagePickerController, animated: true, completion: nil)
+  }
+  
+  func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    
+//    determine whether or not to use edited or original image
+    if let editedImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
+      plusPhotoButton.setImage(editedImage.withRenderingMode(.alwaysOriginal), for: .normal)
+    } else if let originalImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+      plusPhotoButton.setImage(originalImage.withRenderingMode(.alwaysOriginal), for: .normal)
+    }
+
+//    makes photo a circle
+    plusPhotoButton.layer.cornerRadius = plusPhotoButton.frame.width/2
+    plusPhotoButton.layer.masksToBounds = true
+    plusPhotoButton.layer.borderColor = UIColor.black.cgColor
+    plusPhotoButton.layer.borderWidth = 3
+    
+    dismiss(animated: true, completion: nil)
+  }
   
   let emailTextField: UITextField = {
     let tf = UITextField()
@@ -87,10 +113,36 @@ class ViewController: UIViewController {
         print ("There was an error", err)
       }
       
-      print ("Succesfully created", user?.uid ?? "")
+      guard let image = self.plusPhotoButton.imageView?.image else {return}
+      
+      guard let uploadData = image.jpegData(compressionQuality: 0.3) else {return}
+      
+      FIRStorage.storage().reference().child("profile_image").put(uploadData, metadata: nil, completion: { (metadata, err) in
+        
+        if let err = err{
+          print("Failed image upload", err)
+          return
+        }
+        
+        guard let profileImageUrl = metadata?.downloadURL()?.absoluteString else {return}
+        print("successfully uploaded profile image", metadata)
+        
+      })
+      
+      
+//      let usernameValues = ["username":username]
+//      guard let uid = user?.uid else { return }
+//      let values = [uid: usernameValues]
+//
+//      FIRDatabase.database().reference().child("users").updateChildValues(values, withCompletionBlock: { (err, ref) in
+//          if let err = err {
+//            print("print to save user info into db", err)
+//          }
+//          print("made it into db")
+//      })
+      
+      
     })
-    
-    
   }
 
   override func viewDidLoad() {
