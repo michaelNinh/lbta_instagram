@@ -117,7 +117,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
       
       guard let uploadData = image.jpegData(compressionQuality: 0.3) else {return}
       
-      FIRStorage.storage().reference().child("profile_image").put(uploadData, metadata: nil, completion: { (metadata, err) in
+      let filename = NSUUID().uuidString
+      FIRStorage.storage().reference().child("profile_images").child(filename).put(uploadData, metadata: nil, completion: { (metadata, err) in
         
         if let err = err{
           print("Failed image upload", err)
@@ -127,21 +128,20 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         guard let profileImageUrl = metadata?.downloadURL()?.absoluteString else {return}
         print("successfully uploaded profile image", metadata)
         
+        let dictionaryValues = ["username":username, "profileImageUrl": profileImageUrl]
+              guard let uid = user?.uid else { return }
+              let values = [uid: dictionaryValues]
+        
+              FIRDatabase.database().reference().child("users").updateChildValues(values, withCompletionBlock: { (err, ref) in
+                  if let err = err {
+                    print("print to save user info into db", err)
+                  }
+                  print("made it into db")
+              })
+        
+        
       })
-      
-      
-//      let usernameValues = ["username":username]
-//      guard let uid = user?.uid else { return }
-//      let values = [uid: usernameValues]
-//
-//      FIRDatabase.database().reference().child("users").updateChildValues(values, withCompletionBlock: { (err, ref) in
-//          if let err = err {
-//            print("print to save user info into db", err)
-//          }
-//          print("made it into db")
-//      })
-      
-      
+    
     })
   }
 
